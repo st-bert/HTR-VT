@@ -52,14 +52,24 @@ def update_lr_cos(nb_iter, warm_up_iter, total_iter, max_lr, optimizer, min_lr=1
 
 
 class CTCLabelConverter(object):
-    def __init__(self, character):
-        dict_character = list(character)
-        self.dict = {}
-        for i, char in enumerate(dict_character):
-            self.dict[char] = i + 1
-        if len(self.dict) == 87:     # '[' and ']' are not in the test set but in the training and validation sets.
-            self.dict['['], self.dict[']'] = 88, 89
-        self.character = ['[blank]'] + dict_character
+
+    dict = {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5,
+        "6": 6,
+        "7": 7,
+        "8": 8,
+        "9": 9,
+        "[EOF]": 10
+    }
+
+    def __init__(self):
+        dict_character = list(self.dict.keys())
+        self.character = dict_character
 
     def encode(self, text):
         length = [len(s) for s in text]

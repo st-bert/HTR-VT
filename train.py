@@ -68,7 +68,7 @@ def main():
 
     optimizer = sam.SAM(model.parameters(), torch.optim.AdamW, lr=1e-7, betas=(0.9, 0.99), weight_decay=args.weight_decay)
     criterion = torch.nn.CTCLoss(reduction='none', zero_infinity=True)
-    converter = utils.CTCLabelConverter(train_dataset.ralph.values())
+    converter = utils.CTCLabelConverter()
 
     best_cer, best_wer = 1e+6, 1e+6
     train_loss = 0.0

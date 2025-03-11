@@ -102,7 +102,7 @@ def get_args_parser():
                                 description='Dataset parser for training on LAM',
                                 add_help=True,
                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                help="Dataset parser for training on READ")
+                                help="Dataset parser for training on LAM")
 
     LAM.add_argument('--train-data-list', type=str, default='./data/LAM/train.ln',
                      help='train data list (gc file)(ln file)')
@@ -113,5 +113,21 @@ def get_args_parser():
     LAM.add_argument('--test-data-list', type=str, default='./data/LAM/test.ln',
                      help='test data list')
     LAM.add_argument('--nb-cls', default=90, type=int, help='nb of classes, IAM=79+1, READ2016=89+1')
+    
+    CUSTOM = subparsers.add_parser("CUSTOM",
+                                  description='Dataset parser for training on custom dataset',
+                                  add_help=True,
+                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+                                  help="Dataset parser for training on custom dataset")
+
+    CUSTOM.add_argument('--train-data-list', type=str, default='./data/custom/train.ln',
+                       help='train data list (gc file)(ln file)')
+    CUSTOM.add_argument('--data-path', type=str, default='./data/custom/lines/',
+                       help='train data list')
+    CUSTOM.add_argument('--val-data-list', type=str, default='./data/custom/val.ln',
+                       help='val data list')
+    CUSTOM.add_argument('--test-data-list', type=str, default='./data/custom/test.ln',
+                       help='test data list')
+    CUSTOM.add_argument('--nb-cls', default=11, type=int, help='nb of classes, customize based on your dataset. Default is 11 for 0-9 and EOF')
 
     return parser.parse_args()
