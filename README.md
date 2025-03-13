@@ -33,12 +33,11 @@ This is the official implementation of our **Pattern Recognition(PR)** 2025 pape
 
 ## 3. Installation
 
-### 3.1. Environment
+### 3.1. Requirements
 
 Our model can be learnt in a **single GPU RTX-4090 24G**
 ```bash
-conda env create -f environment.yaml
-conda activate htr
+pip install -r requirements.txt
 ```
 
 The code was tested on Python 3.9 and PyTorch 1.13.0.
