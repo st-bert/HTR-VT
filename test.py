@@ -49,7 +49,7 @@ def main():
                                               pin_memory=True,
                                               num_workers=args.num_workers)
 
-    converter = utils.CTCLabelConverter(train_dataset.ralph.values())
+    converter = utils.CTCLabelConverter()
     criterion = torch.nn.CTCLoss(reduction='none', zero_infinity=True).to(device)
 
     model.eval()

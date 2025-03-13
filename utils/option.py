@@ -17,10 +17,10 @@ def get_args_parser():
     parser.add_argument('--max-lr', default=1e-3, type=float, help='learning rate')
     parser.add_argument('--weight-decay', default=5e-1, type=float, help='weight decay')
     parser.add_argument('--use-wandb', action='store_true', default=False, help = 'wheteher use wandb, otherwise use tensorboard')
-    parser.add_argument('--exp-name',type=str, default='IAM_HTR_ORIGAMI_NET', help='experimental name (save dir will be out_dir + exp_name)')
+    parser.add_argument('--exp-name',type=str, default='CUSTOM_HTR', help='experimental name (save dir will be out_dir + exp_name)')
     parser.add_argument('--seed', default=123, type=int, help='seed for initializing training. ')
 
-    parser.add_argument('--img-size', default=[512, 64], type=int, nargs='+', help='image size')
+    parser.add_argument('--img-size', default=[256, 256], type=int, nargs='+', help='image size')
     parser.add_argument('--attn-mask-ratio', default=0., type=float, help='attention drop_key mask ratio')
     parser.add_argument('--patch-size', default=[4, 32], type=int, nargs='+', help='patch size')
     parser.add_argument('--mask-ratio', default=0.3, type=float, help='mask ratio')
@@ -63,6 +63,12 @@ def get_args_parser():
 
     parser.add_argument('--ema-decay', default=0.9999, type=float, help='Exponential Moving Average (EMA) decay')
     parser.add_argument('--alpha', default=0, type=float, help='kld loss ratio')
+
+    # Add early stopping parameters
+    parser.add_argument('--early-stop-patience', default=10, type=int, 
+                       help='Number of evaluations to wait for improvement before early stopping')
+    parser.add_argument('--use-early-stopping', action='store_true', default=True,
+                       help='Whether to use early stopping during training')
 
     subparsers = parser.add_subparsers(title="dataset setting", dest="subcommand")
 
@@ -120,13 +126,13 @@ def get_args_parser():
                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                   help="Dataset parser for training on custom dataset")
 
-    CUSTOM.add_argument('--train-data-list', type=str, default='./data/custom/train.ln',
+    CUSTOM.add_argument('--train-data-list', type=str, default='./data/custom_dataset/train.ln',
                        help='train data list (gc file)(ln file)')
-    CUSTOM.add_argument('--data-path', type=str, default='./data/custom/lines/',
+    CUSTOM.add_argument('--data-path', type=str, default='./data/custom_dataset/lines/',
                        help='train data list')
-    CUSTOM.add_argument('--val-data-list', type=str, default='./data/custom/val.ln',
+    CUSTOM.add_argument('--val-data-list', type=str, default='./data/custom_dataset/val.ln',
                        help='val data list')
-    CUSTOM.add_argument('--test-data-list', type=str, default='./data/custom/test.ln',
+    CUSTOM.add_argument('--test-data-list', type=str, default='./data/custom_dataset/test.ln',
                        help='test data list')
     CUSTOM.add_argument('--nb-cls', default=11, type=int, help='nb of classes, customize based on your dataset. Default is 11 for 0-9 and EOF')
 

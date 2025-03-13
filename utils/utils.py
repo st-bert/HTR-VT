@@ -64,7 +64,7 @@ class CTCLabelConverter(object):
         "7": 7,
         "8": 8,
         "9": 9,
-        "[EOF]": 10
+        "X": 10 # it's used as EOF
     }
 
     def __init__(self):

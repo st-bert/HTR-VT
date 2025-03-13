@@ -15,10 +15,10 @@ from data import dataset
 from model import HTR_VT
 
 
-def preprocess_image(image_path):
+def preprocess_image(image_path, img_size):
     image = Image.open(image_path).convert('L')
     transform_fn = transforms.Compose([
-        transforms.Resize(tuple([64, 512])),
+        transforms.Resize(tuple(img_size)),
         transforms.ToTensor()
     ])
     image_tensor = transform_fn(image).unsqueeze(0)
@@ -28,11 +28,11 @@ def preprocess_image(image_path):
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--nb_cls', type=int, default=90)
-    parser.add_argument('--img-size', default=[512, 64], type=int, nargs='+')
-    parser.add_argument('--data_path', type=str, default='../data/read2016/lines/')
-    parser.add_argument('--pth_path', type=str, default='../data/read/best_CER.pth')
-    parser.add_argument('--train_data_list', type=str, default='../data/read2016/train.ln')
+    parser.add_argument('--nb_cls', type=int, default=11)
+    parser.add_argument('--img-size', default=[256, 256], type=int, nargs='+')
+    parser.add_argument('--data_path', type=str, default='../data/custom_dataset/lines/')
+    parser.add_argument('--pth_path', type=str, default='../output/custom_dataset/best_CER.pth')
+    parser.add_argument('--train_data_list', type=str, default='../data/custom_dataset/train.ln')
     parser.add_argument('--seed', type=int, default=1234)
     parser.add_argument('--image_path', type=str, default='./valid_1.jpeg')
 
@@ -57,9 +57,9 @@ def main():
     model.eval()
 
     train_dataset = dataset.myLoadDS(args.train_data_list, args.data_path, args.img_size)
-    converter = utils.CTCLabelConverter(train_dataset.ralph.values())
+    converter = utils.CTCLabelConverter()
 
-    image_tensor = preprocess_image(args.image_path)
+    image_tensor = preprocess_image(args.image_path, args.img_size)
     image_tensor = image_tensor.to(device)
 
     with torch.no_grad():
