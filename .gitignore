@@ -63,3 +63,9 @@ coverage.xml
 # AWS credentials
 .aws/
 aws.credentials 
+
+# Wandb
+wandb/
+
+# output events
+output/*/events.*
