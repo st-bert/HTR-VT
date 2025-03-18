@@ -26,21 +26,33 @@ def validation(model, criterion, evaluation_loader, converter):
         batch_size = image_tensors.size(0)
         image = image_tensors.cuda()
 
-        text_for_loss, length_for_loss = converter.encode(labels)
-
+        # Get predictions from model
         preds = model(image)
         preds = preds.float()
+        
+        # Reshape predictions for cross entropy loss
+        batch_size, seq_len, vocab_size = preds.size()
+        preds_flat = preds.reshape(-1, vocab_size)
+        
+        # For decoding predictions to text
         preds_size = torch.IntTensor([preds.size(1)] * batch_size)
-        preds = preds.permute(1, 0, 2).log_softmax(2)
-
-        torch.backends.cudnn.enabled = False
-        cost = criterion(preds, text_for_loss, preds_size, length_for_loss).mean()
-        torch.backends.cudnn.enabled = True
-
-        _, preds_index = preds.max(2)
-        preds_index = preds_index.transpose(1, 0).contiguous().view(-1)
+        
+        # Get softmax probabilities for decoding
+        preds_softmax = preds.log_softmax(2)
+        
+        # Get predicted indices
+        _, preds_index = preds_softmax.max(2)
         preds_str = converter.decode(preds_index.data, preds_size.data)
-        valid_loss += cost.item()
+        
+        # Calculate loss (if criterion is provided)
+        if criterion is not None:
+            text_for_loss = converter.encode(labels)
+            # For cross entropy, we need to flatten the target
+            targets_flat = text_for_loss.cuda().reshape(-1)
+            # Calculate loss
+            cost = criterion(preds_flat, targets_flat)
+            valid_loss += cost.item()
+        
         count += 1
 
         all_preds_str.extend(preds_str)
@@ -74,4 +86,4 @@ def validation(model, criterion, evaluation_loader, converter):
     CER = tot_ED / float(length_of_gt)
     WER = tot_ED_wer / float(length_of_gt_wer)
 
-    return val_loss, CER, WER, preds_str, labels
+    return val_loss, CER, WER, all_preds_str, all_labels

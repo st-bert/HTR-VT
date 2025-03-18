@@ -19,6 +19,7 @@ def get_args_parser():
     parser.add_argument('--use-wandb', action='store_true', default=False, help = 'wheteher use wandb, otherwise use tensorboard')
     parser.add_argument('--exp-name',type=str, default='CUSTOM_HTR', help='experimental name (save dir will be out_dir + exp_name)')
     parser.add_argument('--seed', default=123, type=int, help='seed for initializing training. ')
+    parser.add_argument('--max-seq-length', default=10, type=int, help='max sequence length')
 
     parser.add_argument('--img-size', default=[256, 256], type=int, nargs='+', help='image size')
     parser.add_argument('--attn-mask-ratio', default=0., type=float, help='attention drop_key mask ratio')
@@ -134,6 +135,6 @@ def get_args_parser():
                        help='val data list')
     CUSTOM.add_argument('--test-data-list', type=str, default='./data/custom_dataset/test.ln',
                        help='test data list')
-    CUSTOM.add_argument('--nb-cls', default=11, type=int, help='nb of classes, customize based on your dataset. Default is 11 for 0-9 and EOF')
+    CUSTOM.add_argument('--nb-cls', default=10, type=int, help='nb of classes, customize based on your dataset. Default is 10 for 0-9')
 
     return parser.parse_args()

@@ -45,13 +45,13 @@ class ResNet18(nn.Module):
         
         self.inplanes = nb_feat // 4
         super(ResNet18, self).__init__()
-        self.conv1 = nn.Conv2d(1, nb_feat // 4, kernel_size=3, stride=(2, 1), padding=1, bias=False)
+        self.conv1 = nn.Conv2d(1, nb_feat // 4, kernel_size=3, stride=2, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(nb_feat // 4, eps=1e-05)
         self.relu = nn.ReLU(inplace=True)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=(2, 1), padding=1)
-        self.layer1 = self._make_layer(BasicBlock, nb_feat // 4, 2, stride=(2, 1))
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.layer1 = self._make_layer(BasicBlock, nb_feat // 4, 2, stride=1)
         self.layer2 = self._make_layer(BasicBlock, nb_feat // 2, 2, stride=2)
-        self.layer3 = self._make_layer(BasicBlock, nb_feat, 2, stride=2)
+        self.layer3 = self._make_layer(BasicBlock, nb_feat, 2, stride=1)
 
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None

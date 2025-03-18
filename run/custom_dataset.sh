@@ -1,6 +1,6 @@
 python3 train.py --exp-name custom_dataset \
---max-lr 1e-5 \
---train-bs 64 \
+--max-lr 1e-4 \
+--train-bs 32 \
 --val-bs 8 \
 --weight-decay 0.5 \
 --mask-ratio 0.4 \
@@ -15,13 +15,14 @@ python3 train.py --exp-name custom_dataset \
 --total-iter 100000 \
 --eval-iter 100 \
 --use-early-stopping \
---early-stop-patience 10 \
+--early-stop-patience 5 \
 --use-wandb \
+--max-seq-length 10 \
 CUSTOM
 
 python3 test.py --exp-name custom_dataset \
---max-lr 1e-3 \
---train-bs 64 \
+--max-lr 1e-4 \
+--train-bs 32 \
 --val-bs 8 \
 --weight-decay 0.5 \
 --mask-ratio 0.4 \
@@ -34,4 +35,5 @@ python3 test.py --exp-name custom_dataset \
 --proba 0.5 \
 --alpha 1 \
 --total-iter 100000 \
+--max-seq-length 10 \
 CUSTOM

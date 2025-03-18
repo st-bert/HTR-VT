@@ -13,16 +13,23 @@ from data import dataset
 from model import HTR_VT
 from functools import partial
 
-
-def compute_loss(args, model, image, batch_size, criterion, text, length):
+def compute_loss_ce(args, model, image, batch_size, criterion, text):
     preds = model(image, args.mask_ratio, args.max_span_length, use_masking=True)
     preds = preds.float()
-    preds_size = torch.IntTensor([preds.size(1)] * batch_size).cuda()
-    preds = preds.permute(1, 0, 2).log_softmax(2)
-
-    torch.backends.cudnn.enabled = False
-    loss = criterion(preds, text.cuda(), preds_size, length.cuda()).mean()
-    torch.backends.cudnn.enabled = True
+    
+    # Reshape predictions for cross entropy loss
+    # [batch_size, seq_len, vocab_size]
+    batch_size, seq_len, vocab_size = preds.size()
+    
+    # Flatten predictions to [batch_size * seq_len, vocab_size]
+    preds_flat = preds.reshape(-1, vocab_size)
+    
+    # Flatten targets to [batch_size * seq_len]
+    targets_flat = text.cuda().reshape(-1)
+    
+    # Apply cross entropy loss
+    loss = criterion(preds_flat, targets_flat)
+    
     return loss
 
 
@@ -48,7 +55,7 @@ def main():
         writer = SummaryWriter(args.save_dir)
         logger.info("Using TensorBoard for logging")
 
-    model = HTR_VT.create_model(nb_cls=args.nb_cls, img_size=args.img_size[::-1])
+    model = HTR_VT.create_model(nb_cls=args.nb_cls, img_size=args.img_size[::-1], max_seq_length=args.max_seq_length)
 
     total_param = sum(p.numel() for p in model.parameters())
     logger.info('total_param is {}'.format(total_param))
@@ -77,8 +84,8 @@ def main():
                                              num_workers=args.num_workers)
 
     optimizer = sam.SAM(model.parameters(), torch.optim.AdamW, lr=1e-7, betas=(0.9, 0.99), weight_decay=args.weight_decay)
-    criterion = torch.nn.CTCLoss(reduction='none', zero_infinity=True)
-    converter = utils.CTCLabelConverter()
+    cross_entropy_converter = utils.CrossEntropyConverter(args.max_seq_length)
+    criterion = torch.nn.CrossEntropyLoss(ignore_index=cross_entropy_converter.pad_token)
 
     best_cer, best_wer = 1e+6, 1e+6
     train_loss = 0.0
@@ -96,16 +103,19 @@ def main():
         optimizer.zero_grad()
         batch = next(train_iter)
         image = batch[0].cuda()
-        text, length = converter.encode(batch[1])
+        text_ce = cross_entropy_converter.encode(batch[1])
         batch_size = image.size(0)
-        loss = compute_loss(args, model, image, batch_size, criterion, text, length)
-        loss.backward()
+        # loss = compute_loss(args, model, image, batch_size, criterion, text, length)
+        # loss.backward()
+        loss_ce = compute_loss_ce(args, model, image, batch_size, criterion, text_ce)
+        loss_ce.backward()
         optimizer.first_step(zero_grad=True)
-        compute_loss(args, model, image, batch_size, criterion, text, length).backward()
+        loss_ce = compute_loss_ce(args, model, image, batch_size, criterion, text_ce)
+        loss_ce.backward()
         optimizer.second_step(zero_grad=True)
         model.zero_grad()
         model_ema.update(model, num_updates=nb_iter / 2)
-        train_loss += loss.item()
+        train_loss += loss_ce.item()
 
         if nb_iter % args.print_iter == 0:
             train_loss_avg = train_loss / args.print_iter
@@ -128,7 +138,7 @@ def main():
                 val_loss, val_cer, val_wer, preds, labels = valid.validation(model_ema.ema,
                                                                              criterion,
                                                                              val_loader,
-                                                                             converter)
+                                                                             cross_entropy_converter)
 
                 if val_cer < best_cer:
                     logger.info(f'CER improved from {best_cer:.4f} to {val_cer:.4f}!!!')
@@ -158,14 +168,21 @@ def main():
                     }
                     torch.save(checkpoint, os.path.join(args.save_dir, 'best_WER.pth'))
 
+                correct_predictions = sum(p == l for p, l in zip(preds, labels))
+                total_predictions = len(labels)
+                accuracy = correct_predictions / total_predictions
+
                 logger.info(
-                    f'Val. loss : {val_loss:0.3f} \t CER : {val_cer:0.4f} \t WER : {val_wer:0.4f} \t ')
+                    f'Val. loss : {val_loss:0.3f} \t CER : {val_cer:0.4f} \t WER : {val_wer:0.4f} \t Accuracy: {correct_predictions}/{total_predictions} ({accuracy:0.4f})')
+                
+                
 
                 if args.use_wandb:
                     wandb.log({
                         'val/loss': val_loss,
                         'val/CER': val_cer,
                         'val/WER': val_wer,
+                        'val/Accuracy': accuracy,
                         'val/best_CER': best_cer,
                         'val/best_WER': best_wer
                     }, step=nb_iter)
@@ -175,7 +192,7 @@ def main():
                     writer.add_scalar('./VAL/bestCER', best_cer, nb_iter)
                     writer.add_scalar('./VAL/bestWER', best_wer, nb_iter)
                     writer.add_scalar('./VAL/val_loss', val_loss, nb_iter)
-                
+                    writer.add_scalar('./VAL/Accuracy', accuracy, nb_iter)
                 # Check if early stopping criteria is met
                 if args.use_early_stopping and early_stop_counter >= args.early_stop_patience:
                     logger.info(f'Early stopping triggered after {nb_iter} iterations. No improvement for {args.early_stop_patience} evaluations.')

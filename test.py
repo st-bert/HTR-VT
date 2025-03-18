@@ -21,7 +21,7 @@ def main():
     logger = utils.get_logger(args.save_dir)
     logger.info(json.dumps(vars(args), indent=4, sort_keys=True))
 
-    model = HTR_VT.create_model(nb_cls=args.nb_cls, img_size=args.img_size[::-1])
+    model = HTR_VT.create_model(nb_cls=args.nb_cls, img_size=args.img_size[::-1], max_seq_length=args.max_seq_length)
 
     pth_path = args.save_dir + '/best_CER.pth'
     logger.info('loading HWR checkpoint from {}'.format(pth_path))
@@ -49,18 +49,23 @@ def main():
                                               pin_memory=True,
                                               num_workers=args.num_workers)
 
-    converter = utils.CTCLabelConverter()
-    criterion = torch.nn.CTCLoss(reduction='none', zero_infinity=True).to(device)
+    
+    cross_entropy_converter = utils.CrossEntropyConverter(max_length=args.max_seq_length)
+    
+    criterion = torch.nn.CrossEntropyLoss(ignore_index=cross_entropy_converter.pad_token).to(device)
 
     model.eval()
     with torch.no_grad():
         val_loss, val_cer, val_wer, preds, labels = valid.validation(model,
                                                                      criterion,
                                                                      test_loader,
-                                                                     converter)
+                                                                     cross_entropy_converter)
+        correct_predictions = sum(p == l for p, l in zip(preds, labels))
+        total_predictions = len(labels)
+        accuracy = correct_predictions / total_predictions
 
     logger.info(
-        f'Test. loss : {val_loss:0.3f} \t CER : {val_cer:0.4f} \t WER : {val_wer:0.4f} ')
+        f'Test. loss : {val_loss:0.3f} \t CER : {val_cer:0.4f} \t WER : {val_wer:0.4f} \t Accuracy: {correct_predictions}/{total_predictions} ({accuracy:0.4f})')
 
 
 if __name__ == '__main__':

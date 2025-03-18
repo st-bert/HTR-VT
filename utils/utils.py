@@ -93,7 +93,61 @@ class CTCLabelConverter(object):
             texts.append(text)
             index += l
         return texts
+    
+class CrossEntropyConverter:
+    def __init__(self, max_length):
+        self.max_length = max_length
+        self.eos_token = 10  # Assumiamo che 10 sia l'indice di EOS
+        self.pad_token = 11  # Aggiungi un token di padding se necessario
+        
+    def encode(self, text_batch):
+        """
+        Converte una lista di stringhe in tensori per Cross Entropy
+        """
+        batch_size = len(text_batch)
+        targets = torch.ones(batch_size, self.max_length).long() * self.pad_token
+        
+        for i, text in enumerate(text_batch):
+            for j, char in enumerate(text):
+                if j < self.max_length:
+                    # Converti il carattere in indice
+                    
+                    targets[i, j] = int(char)
+            # Aggiungi EOS alla fine se c'è spazio
+            if len(text) < self.max_length:
+                targets[i, len(text)] = self.eos_token
+        
+        return targets
 
+    def decode(self, predictions, length=None):
+        """
+        Decode predictions from the model for cross entropy loss
+        
+        Args:
+            predictions: tensor of shape [batch_size, seq_len] containing predicted indices
+            length: optional tensor containing sequence lengths (not used in cross entropy case)
+            
+        Returns:
+            list of decoded strings
+        """
+        texts = []
+        
+        # For cross entropy, predictions are already indices
+        for pred in predictions:
+            char_list = []
+            for idx in pred:
+                # Stop at EOS token or padding
+                if idx == self.eos_token:
+                    break
+                if idx != self.pad_token:
+                    # Convert index to character
+                    if 0 <= idx < 10:  # Assuming digits 0-9
+                        char_list.append(str(idx.item()))
+            
+            text = ''.join(char_list)
+            texts.append(text)
+            
+        return texts
 
 class Averager(object):
     def __init__(self):
