@@ -33,9 +33,7 @@ def main():
 
     parser.add_argument('--nb_cls', type=int, default=10)
     parser.add_argument('--img-size', default=[256, 256], type=int, nargs='+')
-    parser.add_argument('--data_path', type=str, default='../data/custom_dataset/lines/')
     parser.add_argument('--pth_path', type=str, default='../output/custom_dataset/best_CER.pth')
-    parser.add_argument('--train_data_list', type=str, default='../data/custom_dataset/train.ln')
     parser.add_argument('--seed', type=int, default=1234)
     parser.add_argument('--image_folder', type=str, default='./test_images/')
     parser.add_argument('--num_images', type=int, default=10)
@@ -68,7 +66,6 @@ def main():
     model = model.to(device)
     model.eval()
 
-    train_dataset = dataset.myLoadDS(args.train_data_list, args.data_path, args.img_size)
     converter = utils.CrossEntropyConverter(args.max_seq_length)
 
     image_tensor = preprocess_image(image_paths, args.img_size)

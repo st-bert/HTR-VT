@@ -40,6 +40,7 @@ def replace_X_with_nothing_everywhere(input_path):
 if __name__ == "__main__":
     input_path = "/workspace/HTR-VT/data/custom_dataset/"
     output_path = "/workspace/test_images"
+    os.makedirs(output_path, exist_ok=True)
     create_test_images(input_path, output_path)
     # replace_X_with_nothing_everywhere(os.path.join(input_path, "lines"))
 
